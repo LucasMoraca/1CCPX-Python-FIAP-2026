@@ -1,0 +1,27 @@
+<p> Exercício 8 - Inserção manual em posição específica
+    Insira o valor 25 na posição 2, deslocando os demais elementos.
+</p>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script>
+    let dados = [10, 20, 30, 40];
+    let valor = 25;
+    let posicao = 2;
+
+    dados.push(0); // Abre uma posição no final 
+
+    for (let i = dados.length - 1; i > posicao; i--) {
+        dados[i] = dados[i - 1]; // Desloca os elementos para a direita
+    }
+
+    dados[posicao] = valor; // Insere o valor na posição desejada
+
+    console.log(dados); // Saída: [10, 20, 25, 30, 40]
+    </script>
+</head>
+<body>
+    
+</body>
+</html>

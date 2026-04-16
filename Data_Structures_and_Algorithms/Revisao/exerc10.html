@@ -1,0 +1,24 @@
+<p> Exercício 10 - Verificar se está ordenado
+    Verifique se um vetor numérico está ordenado em ordem crescente.
+</p>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script>
+    let v = [10, 20, 30, 40, 50];
+    let ordenado = true;
+
+    for (let i = 0; i < v.length - 1; i++) {
+        if (v[i] > v[i + 1]) {
+            ordenado = false;
+            break;
+        }
+    }
+    console.log('Ordenado? ', ordenado);
+    </script>
+</head>
+<body>
+    
+</body>
+</html>

@@ -1,0 +1,23 @@
+<p> Exercício 9 - Remoção manual por posição
+    Remova o elemento na posição 1, deslocando os demais elementos para esquerda.
+</p>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script>
+    let dados = [10, 20, 30, 40, 50];
+    let posicao = 1; // Posição do elemento a ser removido (20)
+
+    for (let i = posicao; i < dados.length - 1; i++) {
+        dados[i] = dados[i + 1]; // Desloca os elementos para a esquerda
+    }
+    dados.pop(); // Remove o último elemento, que agora é duplicado
+
+    console.log(dados); // Saída: [10, 30, 40, 50]
+    </script>
+</head>
+<body>
+    
+</body>
+</html>
