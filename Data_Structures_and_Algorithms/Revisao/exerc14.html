@@ -1,0 +1,40 @@
+<p> Exercício 14 - Parênteses balanceados
+    Verifique se uma expressão possui parênteses balanceados.
+</p>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script>
+let expressao = '(a+b) * (c-d)';
+let pilha = [];
+let ok = true;
+
+for (let i = 0; i < expressao.length; i++) {
+    // 1. Se encontrar um parêntese de abertura, coloca na pilha
+    if (expressao[i] === '(') {
+        pilha.push('(');
+    } 
+    // 2. Se encontrar um de fechamento, verifica se há alguém para desempilhar
+    else if (expressao[i] === ')') {
+        if (pilha.length === 0) {
+            ok = false; // Tentou fechar sem ter aberto nenhum
+            break;      // Interrompe o loop, pois já está errado
+        }
+        pilha.pop(); // Remove o parêntese correspondente da pilha
+    }
+}
+
+// 3. Ao final, se a pilha não estiver vazia, significa que sobrou parêntese aberto
+if (pilha.length > 0) {
+    ok = false;
+}
+
+console.log('Balanceado?', ok);
+
+    </script>
+</head>
+<body>
+    
+</body>
+</html>

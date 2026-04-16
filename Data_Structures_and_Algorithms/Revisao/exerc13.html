@@ -1,0 +1,24 @@
+<p> Exercício 13 - Inverter palavra com pilha
+    Use uma pilha para inverter uma palavra.
+</p>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script>
+    let palavra = 'casa';
+    let pilha = [];
+    let invertida = '';
+    for (let i = 0; i < palavra.length; i++) {
+        pilha.push(palavra[i]);
+    }
+    while (pilha.length > 0) {
+        invertida = invertida + pilha.pop();
+    }
+    console.log(invertida);
+    </script>
+</head>
+<body>
+    
+</body>
+</html>
