@@ -6,33 +6,35 @@ B = 1  # Autenticação RFID: 1 (Autenticado), 0 (Acesso negado)
 C = 1  # Engate do Cabo: 1 (Conectado), 0 (Desconectado)
 M = 0  # Manutenção: 1 (Bypass remoto ativo), 0 (Operação normal)
 
-# Expressão Booleana: S = (A and B and C) or M
-# Utiliza-se 'and' explícito para a conjunção comercial e 'or' para a disjunção de gestão remota.
+# 2. Lógica do Sistema
+# A operação comercial depende da conjunção simultânea de A, B e C.
+# A manutenção (M) atua no bloco de disjunção, sobrepondo o bloqueio local.
+# Em Python, valores 1 e 0 são avaliados nativamente como True e False.
 
-S = (A == 1 and B == 1 and C == 1) or (M == 1)
+S = (A and B and C) or M
 
 # 3. Condicionais e Impressão de Resultados
 print("--- Status do Eletroposto ChargeGrid ---")
 
-if S == True:
-    if M == 1:
-        # Bloco de Disjunção (Porta OR) forçou a ativação
+if S:
+    if M:
+        # A manutenção sobrepõe as variáveis comerciais, forçando a saída ativa
         print("Status: Manutenção - Bypass remoto ativo.")
         print("Saída S = 1 (Liberação do sistema para intervenção técnica/destravamento)")
     else:
-        # Bloco de Conjunção (Porta AND) foi totalmente validado
+        # O bloco de conjunção foi 100% validado na operação normal
         print("Status: Sucesso - Operação Comercial Ativa.")
         print("Saída S = 1 (Pagamento, RFID e Cabo validados. Energia liberada)")
         
 else:
-    # Saída bloqueada pela Porta AND durante a operação normal (M=0)
+    # A energia é cortada se faltar qualquer um dos três sinais comerciais
     print("Status: Bloqueado.")
     print("Saída S = 0 (Interrupção do fluxo de energia e desbloqueio do cabo)")
     
-    # Validação individual das variáveis para identificar a falha
-    if A == 0:
+    # Validação individual das variáveis lógicas para identificar a falha
+    if not A:
         print(" -> Alerta: Falha no faturamento/pagamento não encontrado.")
-    if B == 0:
+    if not B:
         print(" -> Alerta: Usuário sem autenticação RFID.")
-    if C == 0:
+    if not C:
         print(" -> Alerta: Cabo desconectado fisicamente.")
