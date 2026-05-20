@@ -1,35 +1,35 @@
 # 1. Definição das Entradas (Variáveis Simuladas)
-# Altere os valores para testar diferentes cenários.
+# Altere os valores (1 ou 0) para testar a tabela verdade do sistema.
 
-A = 1  # Confirmação de Pagamento: 1 para aprovado, 0 para não encontrado
-B = 1  # Autenticação RFID: 1 para autenticado, 0 para negado
-C = 1  # Engate do Cabo: 1 para conectado, 0 para desconectado
-M = 0  # Manutenção: 1 para manutenção ativa, 0 para operação normal
+A = 1  # Confirmação de Pagamento: 1 (Aprovado), 0 (Não encontrado)
+B = 1  # Autenticação RFID: 1 (Autenticado), 0 (Acesso negado)
+C = 1  # Engate do Cabo: 1 (Conectado), 0 (Desconectado)
+M = 0  # Manutenção: 1 (Bypass remoto ativo), 0 (Operação normal)
 
-# 2. Lógica do Sistema Corrigida
-# A energia (S) SÓ é liberada se os 3 pilares comerciais estiverem validados (A, B, C)
-# E se o sistema NÃO estiver em manutenção (M == 0).
-S = (A == 1 and B == 1 and C == 1) and (M == 0)
+# Expressão Booleana: S = (A and B and C) or M
+# Utiliza-se 'and' explícito para a conjunção comercial e 'or' para a disjunção de gestão remota.
+
+S = (A == 1 and B == 1 and C == 1) or (M == 1)
 
 # 3. Condicionais e Impressão de Resultados
 print("--- Status do Eletroposto ChargeGrid ---")
 
-if M == 1:
-    # Cenário de Manutenção (Bloqueio Absoluto)
-    print("Status: Em Manutenção.")
-    print("Saída S = 0 (Fluxo de energia bloqueado por segurança para intervenção técnica)")
-    
-elif S == True:
-    # Cenário de Operação Normal (Todos os requisitos validados)
-    print("Status: Sucesso - Operação Comercial Ativa.")
-    print("Saída S = 1 (Liberação de corrente elétrica e travamento do cabo autorizados)")
-    
+if S == True:
+    if M == 1:
+        # Bloco de Disjunção (Porta OR) forçou a ativação
+        print("Status: Manutenção - Bypass remoto ativo.")
+        print("Saída S = 1 (Liberação do sistema para intervenção técnica/destravamento)")
+    else:
+        # Bloco de Conjunção (Porta AND) foi totalmente validado
+        print("Status: Sucesso - Operação Comercial Ativa.")
+        print("Saída S = 1 (Pagamento, RFID e Cabo validados. Energia liberada)")
+        
 else:
-    # Cenário de Falha Operacional
+    # Saída bloqueada pela Porta AND durante a operação normal (M=0)
     print("Status: Bloqueado.")
     print("Saída S = 0 (Interrupção do fluxo de energia e desbloqueio do cabo)")
     
-    # Detalhamento de qual pilar falhou
+    # Validação individual das variáveis para identificar a falha
     if A == 0:
         print(" -> Alerta: Falha no faturamento/pagamento não encontrado.")
     if B == 0:
