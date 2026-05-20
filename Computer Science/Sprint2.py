@@ -1,36 +1,35 @@
 # 1. Definição das Entradas (Variáveis Simuladas)
-# Altere os valores lógicos (1 para Verdadeiro, 0 para Falso) para testar os cenários.
+# Altere os valores para testar diferentes cenários.
 
 A = 1  # Confirmação de Pagamento: 1 para aprovado, 0 para não encontrado
 B = 1  # Autenticação RFID: 1 para autenticado, 0 para negado
 C = 1  # Engate do Cabo: 1 para conectado, 0 para desconectado
-M = 0  # Manutenção: 1 para liberação técnica, 0 para operação padrão
+M = 0  # Manutenção: 1 para manutenção ativa, 0 para operação normal
 
-# 2. Expressão Booleana e Lógica do Sistema
-# S = (A and B and C) or M
-# A variável S atua como orquestrador da entrega de energia.
-
-S = (A == 1 and B == 1 and C == 1) or (M == 1)
+# 2. Lógica do Sistema Corrigida
+# A energia (S) SÓ é liberada se os 3 pilares comerciais estiverem validados (A, B, C)
+# E se o sistema NÃO estiver em manutenção (M == 0).
+S = (A == 1 and B == 1 and C == 1) and (M == 0)
 
 # 3. Condicionais e Impressão de Resultados
-print("--- Status do Eletroposto ---")
+print("--- Status do Eletroposto ChargeGrid ---")
 
 if M == 1:
-    # Cenário de Gestão Remota (Porta OR)
-    print("Status: Manutenção - Bypass remoto ativo.")
-    print("Saída S = 1 (Liberação de corrente elétrica e travamento do cabo autorizados)")
+    # Cenário de Manutenção (Bloqueio Absoluto)
+    print("Status: Em Manutenção.")
+    print("Saída S = 0 (Fluxo de energia bloqueado por segurança para intervenção técnica)")
     
 elif S == True:
-    # Cenário de Operação Normal (Porta AND)
+    # Cenário de Operação Normal (Todos os requisitos validados)
     print("Status: Sucesso - Operação Comercial Ativa.")
     print("Saída S = 1 (Liberação de corrente elétrica e travamento do cabo autorizados)")
     
 else:
-    # Cenário de Falha em um dos pilares comerciais ou de segurança física
+    # Cenário de Falha Operacional
     print("Status: Bloqueado.")
     print("Saída S = 0 (Interrupção do fluxo de energia e desbloqueio do cabo)")
     
-    # Detalhamento das falhas locais
+    # Detalhamento de qual pilar falhou
     if A == 0:
         print(" -> Alerta: Falha no faturamento/pagamento não encontrado.")
     if B == 0:
