@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Fluxo Arquitetural Chatbot GRID</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #f7f6f2;
+      --surface: #ffffff;
+      --surface-2: #f1f4f8;
+      --text: #1f2937;
+      --muted: #5b6472;
+      --line: #cfd6df;
+      --primary: #01696f;
+      --primary-2: #0f766e;
+      --warn: #964219;
+      --danger: #a12c7b;
+      --ok: #437a22;
+      --shadow: 0 12px 30px rgba(0,0,0,0.08);
+      --radius: 18px;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(180deg, #f7f6f2 0%, #eef4f7 100%);
+      color: var(--text);
+      line-height: 1.6;
+    }
+    .wrap {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 32px 20px 56px;
+    }
+    .hero {
+      background: rgba(255,255,255,0.78);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(31,41,55,0.08);
+      border-radius: 28px;
+      padding: 28px;
+      box-shadow: var(--shadow);
+      margin-bottom: 24px;
+    }
+    .eyebrow {
+      display: inline-block;
+      padding: 6px 12px;
+      border-radius: 999px;
+      background: rgba(1,105,111,0.1);
+      color: var(--primary);
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: .02em;
+      margin-bottom: 12px;
+    }
+    h1 {
+      font-size: clamp(2rem, 4vw, 3.4rem);
+      line-height: 1.08;
+      margin: 0 0 12px;
+    }
+    .lede {
+      font-size: 1.05rem;
+      color: var(--muted);
+      max-width: 78ch;
+      margin: 0;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: 1.25fr .75fr;
+      gap: 24px;
+      align-items: start;
+    }
+    .card {
+      background: var(--surface);
+      border: 1px solid rgba(31,41,55,0.08);
+      border-radius: var(--radius);
+      padding: 22px;
+      box-shadow: var(--shadow);
+    }
+    h2 {
+      margin: 0 0 14px;
+      font-size: 1.2rem;
+    }
+    .meta {
+      display: grid;
+      gap: 12px;
+    }
+    .meta-item {
+      border: 1px solid rgba(31,41,55,0.08);
+      background: var(--surface-2);
+      border-radius: 14px;
+      padding: 14px;
+    }
+    .meta-item strong { display: block; margin-bottom: 6px; }
+    ul {
+      margin: 10px 0 0;
+      padding-left: 18px;
+    }
+    .mermaid {
+      background: #fbfcfd;
+      border-radius: 16px;
+      padding: 10px;
+      overflow: auto;
+    }
+    .code {
+      margin-top: 18px;
+      background: #111827;
+      color: #e5eef7;
+      border-radius: 16px;
+      padding: 16px;
+      font-size: 13px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 14px;
+    }
+    .chip {
+      padding: 8px 12px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 600;
+      border: 1px solid rgba(31,41,55,0.08);
+      background: #fff;
+    }
+    .chip.primary { color: var(--primary); background: rgba(1,105,111,0.09); }
+    .chip.warn { color: var(--warn); background: rgba(150,66,25,0.10); }
+    .chip.ok { color: var(--ok); background: rgba(67,122,34,0.10); }
+    .chip.danger { color: var(--danger); background: rgba(161,44,123,0.10); }
+    @media (max-width: 920px) {
+      .grid { grid-template-columns: 1fr; }
+      .wrap { padding: 18px 14px 42px; }
+      .hero, .card { padding: 18px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <section class="hero">
+      <span class="eyebrow">Arquitetura Operacional • ChargeGrid Intelligence</span>
+      <h1>Mapeamento do Fluxo Arquitetural: Chatbot GRID</h1>
+      <p class="lede">Estrutura visual do fluxo do chatbot com foco em entrada multicanal, sanitização, injeção de contexto via RAG, consulta ao LLM, validação técnica e tratamento de casos fora de escopo.</p>
+    </section>
+
+    <section class="grid">
+      <article class="card">
+        <h2>Fluxograma</h2>
+        <div class="mermaid">
+flowchart TD
+    A([INÍCIO]) --> B[Interface de Entrada]
+    B --> B1[Usuário envia dúvida técnica ou operacional]
+    B1 --> B2[Captura da mensagem bruta e metadados\nCanal, ID do carregador, nível de acesso, perfil]
+    B2 --> C[Processamento e Sanitização]
+    C --> C1[Limpeza de dados\nRemoção de caracteres especiais, payloads suspeitos e ataques]
+    C1 --> C2[Identificação de intenção\nVerifica aderência ao ecossistema ChargeGrid Intelligence]
+    C2 --> D{Fora de escopo?}
+    D -- Sim --> E[Resposta padrão ou escalada para suporte humano\nRF10]
+    E --> Z([FIM])
+    D -- Não --> F[Injeção de Contexto]
+    F --> F1[System Prompt\nGRID técnico, formal e sem emojis]
+    F1 --> F2[RAG com LangChain\nConsulta manuais GoodWe e base operacional]
+    F2 --> F3[Variável de perfil\nMotorista ou Gestor para ajuste de linguagem RF09]
+    F3 --> G[Consulta ao Modelo LLM]
+    G --> G1[Processamento pelo Gemini ou GPT]
+    G1 --> H[Geração de Resposta]
+    H --> H1[Resposta contextualizada\nBaseada exclusivamente no contexto injetado]
+    H1 --> H2[Validação de segurança e conformidade técnica\nEvita instruções perigosas]
+    H2 --> I[Interface de Saída]
+    I --> I1[Entrega de texto limpo, objetivo e técnico]
+    I1 --> Z([FIM])
+
+    style A fill:#e6f3f3,stroke:#01696f,stroke-width:2px,color:#123
+    style Z fill:#e6f3f3,stroke:#01696f,stroke-width:2px,color:#123
+    style B fill:#eef6ff,stroke:#006494,stroke-width:1.5px,color:#123
+    style C fill:#fff4eb,stroke:#964219,stroke-width:1.5px,color:#123
+    style D fill:#fde7f3,stroke:#a12c7b,stroke-width:2px,color:#123
+    style E fill:#fff1f2,stroke:#a13544,stroke-width:1.5px,color:#123
+    style F fill:#edf9f2,stroke:#437a22,stroke-width:1.5px,color:#123
+    style G fill:#f3f0ff,stroke:#7a39bb,stroke-width:1.5px,color:#123
+    style H fill:#eefaf8,stroke:#0f766e,stroke-width:1.5px,color:#123
+    style I fill:#eef6ff,stroke:#006494,stroke-width:1.5px,color:#123
+        </div>
+
+        <div class="legend">
+          <span class="chip primary">Entrada e saída</span>
+          <span class="chip warn">Segurança e sanitização</span>
+          <span class="chip danger">Decisão / fora de escopo</span>
+          <span class="chip ok">Contexto e RAG</span>
+        </div>
+
+        <div class="code">flowchart TD
+A([INÍCIO]) --> B[Interface de Entrada]
+B --> B1[Usuário envia dúvida técnica ou operacional]
+B1 --> B2[Captura da mensagem bruta e metadados\nCanal, ID do carregador, nível de acesso, perfil]
+B2 --> C[Processamento e Sanitização]
+C --> C1[Limpeza de dados\nRemoção de caracteres especiais, payloads suspeitos e ataques]
+C1 --> C2[Identificação de intenção\nVerifica aderência ao ecossistema ChargeGrid Intelligence]
+C2 --> D{Fora de escopo?}
+D -- Sim --> E[Resposta padrão ou escalada para suporte humano\nRF10]
+E --> Z([FIM])
+D -- Não --> F[Injeção de Contexto]
+F --> F1[System Prompt\nGRID técnico, formal e sem emojis]
+F1 --> F2[RAG com LangChain\nConsulta manuais GoodWe e base operacional]
+F2 --> F3[Variável de perfil\nMotorista ou Gestor para ajuste de linguagem RF09]
+F3 --> G[Consulta ao Modelo LLM]
+G --> G1[Processamento pelo Gemini ou GPT]
+G1 --> H[Geração de Resposta]
+H --> H1[Resposta contextualizada\nBaseada exclusivamente no contexto injetado]
+H1 --> H2[Validação de segurança e conformidade técnica\nEvita instruções perigosas]
+H2 --> I[Interface de Saída]
+I --> I1[Entrega de texto limpo, objetivo e técnico]
+I1 --> Z([FIM])</div>
+      </article>
+
+      <aside class="card">
+        <h2>Blocos da arquitetura</h2>
+        <div class="meta">
+          <div class="meta-item">
+            <strong>1. Interface de Entrada</strong>
+            Recebe interações via portal web, app mobile ou API, preservando contexto de canal e metadados operacionais.
+          </div>
+          <div class="meta-item">
+            <strong>2. Processamento e Sanitização</strong>
+            Executa limpeza, prevenção contra injeções e triagem inicial da pertinência da pergunta.
+          </div>
+          <div class="meta-item">
+            <strong>3. Injeção de Contexto</strong>
+            Combina prompt sistêmico, recuperação RAG na base GoodWe e perfil do usuário para controlar precisão e tom.
+          </div>
+          <div class="meta-item">
+            <strong>4. LLM + Geração</strong>
+            O modelo recebe apenas o pacote já filtrado e contextualizado, reduzindo alucinação e melhorando consistência.
+          </div>
+          <div class="meta-item">
+            <strong>5. Validação e Entrega</strong>
+            Aplica checagem de segurança e devolve resposta técnica limpa ao motorista ou gestor.
+          </div>
+        </div>
+
+        <h2 style="margin-top:18px;">Justificativa</h2>
+        <p style="margin:0;color:var(--muted);">A centralização da injeção de contexto antes da consulta ao modelo reforça resiliência operacional, aderência aos requisitos funcionais e redução de respostas fora da base autorizada.</p>
+
+        
+      </aside>
+    </section>
+  </main>
+
+  <script type="module">
+    import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+    mermaid.initialize({ startOnLoad: true, theme: 'base', securityLevel: 'loose' });
+  </script>
+</body>
+</html>
