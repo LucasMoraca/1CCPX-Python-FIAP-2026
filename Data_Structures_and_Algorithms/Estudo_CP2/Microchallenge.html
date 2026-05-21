@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Lista Encadeada Simples</title>
+  
+  <!-- Estilização básica da página -->
+  <style>
+    body {
+      font-family: Arial;
+      margin: 30px;
+    }
+    button {
+      width: 150px;
+    }
+    input {
+      width: 450px;
+    }
+    input, button {
+      margin: 5px; /* Espaçamento ao redor dos botões e campos */
+      padding: 8px; /* Espaçamento interno para deixá-los mais "gordinhos" */
+    }
+    #saida {
+      margin-top: 20px;
+      padding: 15px;
+      border: 1px solid #ccc; /* Borda cinza ao redor da área de resultado */
+    }
+  </style>
+</head>
+<body>
+
+    <!-- Interface do Usuário (HTML) -->
+    <h1>Lista Encadeada (versão simples)</h1>
+    
+    <!-- Campo onde o usuário digita o nome -->
+    <input type="text" id="nome" placeholder="Digite um nome">
+    <br>
+    
+    <!-- Botões que chamam as funções JavaScript ao serem clicados (evento onclick) -->
+    <button onclick="adicionarFim()">Adicionar no fim</button>
+    <button onclick="adicionarInicio()">Adicionar no início</button>
+    <button onclick="removerInicio()">Remover início</button>
+    <br>
+    <button onclick="contar()">Contar elementos</button>
+    <button onclick="removerElemento()">Remover elemento</button>
+    <button onclick="mostrar()">Mostrar Lista</button>
+
+    <!-- Div vazia onde os resultados e a lista serão exibidos na tela -->
+    <div id="saida"></div>
+
+    <!-- Lógica de Programação (JavaScript) -->
+    <script>
+    /* 
+      A LÓGICA DA LISTA SIMULADA:
+      Em vez de criar objetos, usamos dois arrays (vetores).
+      - 'valores' guarda a informação (o nome digitado).
+      - 'proximo' guarda a posição (índice) do próximo elemento na lista.
+      O número -1 é usado para representar "nulo" ou o fim da lista.
+    */
+    let valores = [];
+    let proximo = [];
+
+    // 'inicio' e 'ultimo' guardam os índices do primeiro e do último nó da lista.
+    // -1 significa que a lista está vazia.
+    let inicio = -1;
+    let ultimo = -1;
+
+    // Função para adicionar um elemento no final da lista
+    function adicionarFim() {
+        let nome = document.getElementById("nome").value; // Pega o que o usuário digitou
+
+        if (nome === "") { // Verifica se está vazio
+            alert("Digite um nome");
+            return;
+        }
+
+        // O novo elemento será colocado no final dos arrays
+        let novoIndice = valores.length; 
+        valores.push(nome);      // Salva o nome
+        proximo.push(-1);        // Como ele vai para o fim, não tem próximo (aponta para -1)
+
+        // Se a lista estava vazia, o novo elemento é tanto o início quanto o último
+        if (inicio === -1) {
+            inicio = novoIndice;
+            ultimo = novoIndice;
+        } else {
+            // Se já existiam elementos, o antigo 'ultimo' agora aponta para o novo elemento
+            proximo[ultimo] = novoIndice;
+            ultimo = novoIndice; // Atualizamos a variável 'ultimo'
+        }
+        
+        document.getElementById("nome").value = ""; // Limpa a caixa de texto
+        mostrar(); // Atualiza a tela
+    }
+
+    // Função para adicionar um elemento no começo da lista
+    function adicionarInicio() {
+        let nome = document.getElementById("nome").value;
+
+        if (nome === "") {
+            alert("Digite um nome");
+            return;
+        }
+
+        let novoIndice = valores.length;
+        valores.push(nome);
+        
+        // Como ele vai ser o primeiro, ele precisa "apontar" para quem era o primeiro antes
+        proximo.push(inicio); 
+
+        // Agora o 'inicio' oficial passa a ser o índice desse novo elemento
+        inicio = novoIndice;
+
+        // Se a lista estava vazia antes (ultimo era -1), esse novo elemento também é o último
+        if (ultimo === -1) {
+            ultimo = novoIndice;
+        }
+
+        document.getElementById("nome").value = "";
+        mostrar();
+    }
+
+    // Função para remover apenas o primeiro elemento da lista
+    function removerInicio() {
+        // Se já está vazio, não tem o que remover
+        if (inicio === -1) {
+            alert("Lista vazia");
+            return;
+        }
+
+        // O 'inicio' pula para o próximo elemento. O primeiro elemento fica "isolado" e ignorado
+        inicio = proximo[inicio];
+
+        // Se ao remover o primeiro, a lista ficou vazia, precisamos zerar o 'ultimo' também
+        if (inicio === -1) {
+            ultimo = -1;
+        }
+
+        mostrar();
+    }
+
+    // Função para contar quantos elementos existem na lista
+    function contar() {
+        let quantidade = 0;
+        let atual = inicio; // Começa pelo primeiro elemento
+
+        // Enquanto o índice 'atual' for válido (diferente de -1)
+        while (atual !== -1) {
+            quantidade++; // Soma 1 na contagem
+            atual = proximo[atual]; // Pula para o próximo elemento
+        }
+
+        // Exibe a quantidade na div de saída
+        document.getElementById("saida").innerHTML = "Quantidade de elementos: " + quantidade;
+    }
+
+    // Função para buscar e remover um nome específico em qualquer lugar da lista
+    function removerElemento() {
+        let nomeBusca = document.getElementById("nome").value;
+
+        if (nomeBusca === "") {
+            alert("Digite um nome para remover");
+            return;
+        }
+
+        if (inicio === -1) {
+            document.getElementById("saida").innerHTML = "Lista vazia";
+            return;
+        }
+
+        let atual = inicio; // Nó que estamos olhando no momento
+        let anterior = -1;  // Nó que veio antes do atual (necessário para reconectar a lista)
+        let encontrou = false;
+
+        // Percorre a lista nó por nó
+        while (atual !== -1) {
+            if (valores[atual] === nomeBusca) {
+                encontrou = true; // Achou!
+                break; // Interrompe o laço de repetição (while)
+            }
+            anterior = atual;       // O atual vira o anterior para a próxima volta
+            atual = proximo[atual]; // O atual pula para o próximo nó
+        }
+
+        // Se o nome foi encontrado
+        if (encontrou) {
+            // Caso 1: O elemento a ser removido é o primeiro da lista
+            if (anterior === -1) {
+                inicio = proximo[atual]; // O inicio passa a ser o segundo elemento
+                
+                if (inicio === -1) { // Se a lista ficou vazia, arruma o ponteiro 'ultimo'
+                    ultimo = -1;
+                }
+            } 
+            // Caso 2: O elemento está no meio ou no fim
+            else {
+                // A mágica acontece aqui: O nó anterior deixa de apontar para o atual,
+                // e passa a apontar para o próximo DEPOIS do atual. O atual é ignorado/removido.
+                proximo[anterior] = proximo[atual];
+                
+                // Se o atual era o último da lista, o anterior passa a ser o novo 'ultimo'
+                if (proximo[atual] === -1) {
+                    ultimo = anterior;
+                }
+            }
+            
+            document.getElementById("nome").value = "";
+            mostrar(); // Atualiza a tela exibindo a nova lista
+        } else {
+            // Se o while rodou até o final e a variável 'encontrou' continuou falsa
+            document.getElementById("saida").innerHTML = "Nome não encontrado na Lista";
+        }
+    }
+
+    // Função para desenhar a lista na tela de forma amigável
+    function mostrar() {
+        let resultado = "";
+        let atual = inicio;
+
+        // Percorre a lista até o fim
+        while (atual !== -1) {
+            // Adiciona o valor atual na string de resultado seguido por uma setinha
+            resultado += valores[atual] + " → "; 
+            atual = proximo[atual]; // Pula para o próximo
+        }
+
+        // Finaliza a string de resultado
+        if (inicio === -1) {
+            resultado = "Lista vazia";
+        } else {
+            resultado += "null"; // Representa que depois do último não tem nada
+        }
+        
+        // Joga o texto montado na div #saida do HTML
+        document.getElementById("saida").innerHTML = resultado;
+    }
+    </script>
+
+</body>
+</html>

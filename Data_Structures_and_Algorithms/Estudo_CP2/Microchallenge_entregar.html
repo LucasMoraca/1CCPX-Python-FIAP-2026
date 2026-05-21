@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Lista Encadeada Simples</title>
+  <style>
+    body {
+      font-family: Arial;
+      margin: 30px;
+    }
+    button {
+      width: 150px;
+    }
+    input {
+      width: 450px;
+    }
+    input, button {
+      margin: 5px;
+      padding: 8px;
+    }
+    #saida {
+      margin-top: 20px;
+      padding: 15px;
+      border: 1px solid #ccc;
+    }
+  </style>
+</head>
+<body>
+
+    <h1>Lista Encadeada (versão simples)</h1>
+    <input type="text" id="nome" placeholder="Digite um nome">
+    <br>
+    <button onclick="adicionarFim()">Adicionar no fim</button>
+    <button onclick="adicionarInicio()">Adicionar no início</button>
+    <button onclick="removerInicio()">Remover início</button>
+    <br>
+    <button onclick="contar()">Contar elementos</button>
+    <!-- Botão atualizado -->
+    <button onclick="removerElemento()">Remover elemento</button>
+    <button onclick="mostrar()">Mostrar Lista</button>
+
+    <div id="saida"></div>
+
+    <script>
+    // "lista encadeada" simulada
+    let valores = [];
+    let proximo = [];
+
+    let inicio = -1;
+    let ultimo = -1;
+
+    function adicionarFim() {
+        let nome = document.getElementById("nome").value;
+
+        if (nome === "") {
+            alert("Digite um nome");
+            return;
+        }
+
+        let novoIndice = valores.length;
+        valores.push(nome);
+        proximo.push(-1);
+
+        if (inicio === -1) {
+            inicio = novoIndice;
+            ultimo = novoIndice;
+        } else {
+            proximo[ultimo] = novoIndice;
+            ultimo = novoIndice;
+        }
+        document.getElementById("nome").value = "";
+        mostrar();
+    }
+
+    function adicionarInicio() {
+        let nome = document.getElementById("nome").value;
+
+        if (nome === "") {
+            alert("Digite um nome");
+            return;
+        }
+
+        let novoIndice = valores.length;
+        valores.push(nome);
+        proximo.push(inicio);
+
+        inicio = novoIndice;
+
+        if (ultimo === -1) {
+            ultimo = novoIndice;
+        }
+
+        document.getElementById("nome").value = "";
+        mostrar();
+    }
+
+    function removerInicio() {
+        if (inicio === -1) {
+            alert("Lista vazia");
+            return;
+        }
+
+        inicio = proximo[inicio];
+
+        if (inicio === -1) {
+            ultimo = -1;
+        }
+
+        mostrar();
+    }
+
+    function contar() {
+        let quantidade = 0;
+        let atual = inicio;
+
+        while (atual !== -1) {
+            quantidade++;
+            atual = proximo[atual];
+        }
+
+        document.getElementById("saida").innerHTML = "Quantidade de elementos: " + quantidade;
+    }
+
+    // Função Nova: Remover elemento específico
+    function removerElemento() {
+        let nomeBusca = document.getElementById("nome").value;
+
+        if (nomeBusca === "") {
+            alert("Digite um nome para remover");
+            return;
+        }
+
+        if (inicio === -1) {
+            document.getElementById("saida").innerHTML = "Lista vazia";
+            return;
+        }
+
+        let atual = inicio;
+        let anterior = -1;
+        let encontrou = false;
+
+        // Percorre a lista procurando o elemento
+        while (atual !== -1) {
+            if (valores[atual] === nomeBusca) {
+                encontrou = true;
+                break; // Para o loop ao encontrar o elemento
+            }
+            anterior = atual;
+            atual = proximo[atual];
+        }
+
+        if (encontrou) {
+            // Se o elemento a ser removido for o primeiro da lista
+            if (anterior === -1) {
+                inicio = proximo[atual];
+                // Se a lista ficar vazia, atualiza o último também
+                if (inicio === -1) {
+                    ultimo = -1;
+                }
+            } else {
+                // Remove o elemento "pulando" o nó atual na referência
+                proximo[anterior] = proximo[atual];
+                
+                // Se o elemento removido for o último da lista, atualiza o ponteiro 'ultimo'
+                if (proximo[atual] === -1) {
+                    ultimo = anterior;
+                }
+            }
+            
+            document.getElementById("nome").value = "";
+            mostrar();
+        } else {
+            // Caso não encontre
+            document.getElementById("saida").innerHTML = "Nome não encontrado na Lista";
+        }
+    }
+
+    function mostrar() {
+        let resultado = "";
+        let atual = inicio;
+
+        while (atual !== -1) {
+            resultado += valores[atual] + " → ";
+            atual = proximo[atual];
+        }
+
+        if (inicio === -1) {
+            resultado = "Lista vazia";
+        } else {
+            resultado += "null";
+        }
+        
+        document.getElementById("saida").innerHTML = resultado;
+    }
+    </script>
+
+</body>
+</html>
