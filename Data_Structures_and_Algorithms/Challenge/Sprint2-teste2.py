@@ -1,6 +1,7 @@
 import time
 import os
 import json
+import csv
 import random
 from datetime import datetime
 
@@ -27,46 +28,73 @@ class SessaoRecarga:
         
         self.tempo_inicio = time.time()
         self.ultima_atualizacao = self.tempo_inicio
-        self.custo_final = 0.0
         self.status = "Carregando"
         
-        hora = datetime.now().hour
-        self.tarifa_valor = TARIFA_PICO if 18 <= hora <= 21 else TARIFA_BASE
-        self.tipo_tarifa = "Pico" if 18 <= hora <= 21 else "Normal"
+        # Variáveis de tarifação dinâmica
+        self.custo_acumulado = 0.0
+        self.energia_pico = 0.0
+        self.energia_normal = 0.0
+        self.custo_pico = 0.0
+        self.custo_normal = 0.0
+
+    def obter_tarifa_atual(self):
+        """Retorna o valor da tarifa e o tipo baseado na hora atual do sistema."""
+        hora_atual = datetime.now().hour
+        if 18 <= hora_atual <= 21:
+            return TARIFA_PICO, "Pico"
+        return TARIFA_BASE, "Normal"
 
     def calcular_tempo_estimado(self):
         horas_necessarias = self.energia_alvo / POTENCIA_GW11K
         return horas_necessarias * 60 
 
     def atualizar_consumo(self):
+        """Calcula o consumo e custo fracionado dinamicamente com base no tempo decorrido."""
         if self.status != "Carregando":
             return
 
         agora = time.time()
         tempo_horas = ((agora - self.ultima_atualizacao) * FATOR_SIMULACAO) / 3600
         
-        self.energia_entregue += self.potencia_alocada * tempo_horas
-        if self.energia_entregue >= self.energia_alvo:
-            self.energia_entregue = self.energia_alvo
+        # Energia fornecida neste delta de tempo
+        energia_delta = self.potencia_alocada * tempo_horas
+        
+        # Impede que ultrapasse o alvo
+        if self.energia_entregue + energia_delta >= self.energia_alvo:
+            energia_delta = self.energia_alvo - self.energia_entregue
             self.status = "Concluida"
+            
+        # Calcula custo dinâmico
+        tarifa_vigente, tipo_tarifa = self.obter_tarifa_atual()
+        custo_delta = energia_delta * tarifa_vigente
+
+        # Acumula totais
+        self.energia_entregue += energia_delta
+        self.custo_acumulado += custo_delta
+        
+        if tipo_tarifa == "Pico":
+            self.energia_pico += energia_delta
+            self.custo_pico += custo_delta
+        else:
+            self.energia_normal += energia_delta
+            self.custo_normal += custo_delta
             
         self.ultima_atualizacao = agora
 
     def encerrar_sessao(self):
         """Trava os valores finais para evitar flutuações após o encerramento."""
         self.atualizar_consumo()
-        self.custo_final = self.energia_entregue * self.tarifa_valor
         self.status = "Encerrada"
-        return self.custo_final
+        return self
 
 class EletropostoComercial:
     def __init__(self):
         self.sessoes = {}
+        self.historico_sessoes = []  # Armazena sessões finalizadas para relatórios
         self.contador = 1
         self.logs_ocpp = []
 
     def simular_integracao(self, acao, dados):
-        """Simula estrutura JSON OCPP/MODBUS e resposta ACK do servidor."""
         msg_id = f"MSG-{random.randint(1000, 9999)}"
         pacote_tx = {
             "messageId": msg_id,
@@ -123,6 +151,7 @@ class EletropostoComercial:
             
         sessao = self.sessoes.pop(id_sessao)
         sessao.encerrar_sessao()
+        self.historico_sessoes.append(sessao) # Salva no histórico para o relatório
         self.balancear_carga()
         
         self.simular_integracao("StopTransaction", {
@@ -140,87 +169,137 @@ def limpar_tela():
 
 def exibir_painel(sistema):
     limpar_tela()
-    print("=" * 70)
+    print("=" * 85)
     print(" ⚡ CHARGEGRID INTELLIGENCE - PAINEL COMERCIAL")
-    print("=" * 70)
+    print("=" * 85)
     
     if sistema.logs_ocpp:
-        print()
-        print("--- STATUS DE INTEGRAÇÃO (ÚLTIMOS PACOTES OCPP) ---")
+        print("\n--- STATUS DE INTEGRAÇÃO (ÚLTIMOS PACOTES OCPP) ---")
         for log in sistema.logs_ocpp:
             print(log)
             
-    print()
-    print("--- SESSÕES ATIVAS ---")
+    print("\n--- SESSÕES ATIVAS ---")
     if not sistema.sessoes:
         print(" Nenhum veículo conectado.")
     else:
-        print(f"{'ID':<8} | {'PROGRESSO':<12} | {'ENTREGUE':<10} | {'POTÊNCIA':<9} | {'TARIFA':<8} | {'CUSTO (R$)'}")
-        print("-" * 70)
+        print(f"{'ID':<6} | {'PROGRESSO':<12} | {'ENTREGUE':<10} | {'POTÊNCIA':<9} | {'TARIFA ATUAL':<12} | {'CUSTO (R$)'}")
+        print("-" * 85)
         for id_sessao, s in sistema.sessoes.items():
             s.atualizar_consumo()
             
             progresso_pct = (s.energia_entregue / s.energia_alvo) * 100 if s.energia_alvo > 0 else 0
-            custo_parcial = s.energia_entregue * s.tarifa_valor
-            
             potencia_display = 0.0 if s.status == "Concluida" else s.potencia_alocada
+            _, tipo_tarifa_atual = s.obter_tarifa_atual()
             
-            print(f"{id_sessao:<8} | {progresso_pct:>5.1f}% / 100% | {s.energia_entregue:>4.1f} kWh   | {potencia_display:>5.1f} kW | "
-                  f"{s.tipo_tarifa:<8} | R$ {custo_parcial:>5.2f}")
+            print(f"{id_sessao:<6} | {progresso_pct:>5.1f}% / 100% | {s.energia_entregue:>4.1f} kWh   | {potencia_display:>5.1f} kW | "
+                  f"{tipo_tarifa_atual:<12} | R$ {s.custo_acumulado:>5.2f}")
     
+    print("=" * 85)
+
+def gerenciar_relatorios(sistema):
+    limpar_tela()
     print("=" * 70)
+    print(" 📊 RELATÓRIO CONSOLIDADO DE OPERAÇÃO")
+    print("=" * 70)
+    
+    if not sistema.historico_sessoes:
+        print("\nNenhuma sessão foi finalizada ainda para gerar relatório.")
+        print("\n" + "=" * 70)
+        input("Pressione ENTER para voltar...")
+        return
+
+    total_sessoes = len(sistema.historico_sessoes)
+    total_kwh = sum(s.energia_entregue for s in sistema.historico_sessoes)
+    total_kwh_pico = sum(s.energia_pico for s in sistema.historico_sessoes)
+    total_kwh_normal = sum(s.energia_normal for s in sistema.historico_sessoes)
+    total_arrecadado = sum(s.custo_acumulado for s in sistema.historico_sessoes)
+    
+    print(f"Total de Sessões Finalizadas: {total_sessoes}")
+    print(f"Total de Energia Fornecida:   {total_kwh:.2f} kWh")
+    print(f"  - Energia em Horário Pico:  {total_kwh_pico:.2f} kWh")
+    print(f"  - Energia em Horário Base:  {total_kwh_normal:.2f} kWh")
+    print(f"Total Arrecadado Bruto:       R$ {total_arrecadado:.2f}")
+    print("=" * 70)
+    
+    print("\nOpções de Exportação:")
+    print("[1] Exportar como CSV")
+    print("[2] Exportar como JSON")
+    print("[0] Voltar ao Menu Principal")
+    
+    opcao = input("\nSelecione: ")
+    
+    dados_exportacao = []
+    for s in sistema.historico_sessoes:
+        dados_exportacao.append({
+            "id_sessao": s.id,
+            "energia_total_kwh": round(s.energia_entregue, 2),
+            "energia_pico_kwh": round(s.energia_pico, 2),
+            "energia_normal_kwh": round(s.energia_normal, 2),
+            "custo_total_brl": round(s.custo_acumulado, 2)
+        })
+
+    if opcao == '1':
+        arquivo = f"relatorio_chargegrid_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
+        with open(arquivo, mode='w', newline='') as f:
+            writer = csv.DictWriter(f, fieldnames=dados_exportacao[0].keys())
+            writer.writeheader()
+            writer.writerows(dados_exportacao)
+        print(f"\n[+] Relatório exportado com sucesso: {arquivo}")
+        input("Pressione ENTER para voltar...")
+        
+    elif opcao == '2':
+        arquivo = f"relatorio_chargegrid_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+        with open(arquivo, 'w') as f:
+            json.dump({"resumo_geral": {"total_sessoes": total_sessoes, "total_kwh": round(total_kwh, 2), "total_arrecadado": round(total_arrecadado, 2)}, "sessoes": dados_exportacao}, f, indent=4)
+        print(f"\n[+] Relatório exportado com sucesso: {arquivo}")
+        input("Pressione ENTER para voltar...")
 
 def menu_principal():
     sistema = EletropostoComercial()
     
     while True:
         exibir_painel(sistema)
-        print()
-        print("[1] Conectar Veículo")
+        print("\n[1] Conectar Veículo")
         print("[2] Atualizar Painel")
         print("[3] Desconectar Veículo")
+        print("[4] Relatórios e Exportação")
         print("[0] Desligar Terminal")
         
-        print()
-        opcao = input("Selecione uma ação: ")
+        opcao = input("\nSelecione uma ação: ")
         
         if opcao == '1':
-            print()
             try:
-                pct = float(input("Qual a porcentagem desejada de carga? (1 a 100): "))
+                pct = float(input("\nQual a porcentagem desejada de carga? (1 a 100): "))
                 if 1 <= pct <= 100:
                     id_s, tempo = sistema.iniciar_sessao(pct)
-                    print()
-                    print(f"[+] Veículo conectado! Sessão {id_s} iniciada.")
+                    print(f"\n[+] Veículo conectado! Sessão {id_s} iniciada.")
                     print(f"Tempo médio estimado (11kW): {tempo:.0f} minutos.")
                     input("Pressione ENTER para continuar...")
                 else:
-                    print()
-                    input("[!] Valor inválido. A porcentagem deve ser entre 1 e 100. Pressione ENTER...")
+                    input("\n[!] Valor inválido. A porcentagem deve ser entre 1 e 100. Pressione ENTER...")
             except ValueError:
-                print()
-                input("[!] Digite apenas números. Pressione ENTER...")
+                input("\n[!] Digite apenas números. Pressione ENTER...")
                 
         elif opcao == '2':
             continue 
             
         elif opcao == '3':
-            print()
-            id_alvo = input("Digite o ID da sessão (ex: S-001): ").strip().upper()
+            id_alvo = input("\nDigite o ID da sessão (ex: S-001): ").strip().upper()
             recibo = sistema.finalizar_sessao(id_alvo)
             if recibo:
-                print()
-                print(f"=== RECIBO - {id_alvo} ===")
+                print(f"\n=== RECIBO - {id_alvo} ===")
                 print(f"Energia consumida: {recibo.energia_entregue:.2f} kWh")
-                print(f"Tarifa ({recibo.tipo_tarifa}): R$ {recibo.tarifa_valor:.2f} / kWh")
-                print(f"Total pago: R$ {recibo.custo_final:.2f}")
+                print(f"  - Em horário de Pico: {recibo.energia_pico:.2f} kWh")
+                print(f"  - Em horário Base:    {recibo.energia_normal:.2f} kWh")
+                print(f"Total pago: R$ {recibo.custo_acumulado:.2f}")
                 print("===========================")
-                print()
-                input("Pressione ENTER para fechar o recibo e voltar ao painel...")
+                input("\nPressione ENTER para fechar o recibo e voltar ao painel...")
             else:
-                print()
-                input("[!] Sessão não encontrada. Pressione ENTER...")
+                input("\n[!] Sessão não encontrada. Pressione ENTER...")
                 
+        elif opcao == '4':
+            gerenciar_relatorios(sistema)
+
         elif opcao == '0':
             limpar_tela()
             print("Sistema encerrado com segurança.")
