@@ -114,4 +114,4 @@ mission-control-ai/
 
 ---
 
-*FIAP — Global Solution 2026.1 | Prompt and Artificial Intelligence | Prof. Hercules Ramos*
+*FIAP — Global Solution 2026.1 | Prompt and Artificial Intelligence | Prof. José Maia Neto*
