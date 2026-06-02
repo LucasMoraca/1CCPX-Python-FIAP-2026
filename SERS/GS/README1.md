@@ -132,7 +132,7 @@ monitor.py
 
 ```bash
 # Clone o repositório
-git clone https://github.com/<seu-usuario>/space-energy-monitor.git
+git clone https://github.com/LucasMoraca/1CCPX-Python-FIAP-2026/blob/f5e75c649d2c9a3954668471c8fe5c6c5ef00661/SERS/GS/monitor2.py
 cd space-energy-monitor
 
 # Execute — o navegador abre automaticamente
@@ -209,9 +209,9 @@ Essa lógica é chamada a cada ciclo para exibição no painel e também no mome
 
 | Nome completo | RM |
 |---|---|
-| *(Adicionar nome)* | *(Adicionar RM)* |
-| *(Adicionar nome)* | *(Adicionar RM)* |
-| *(Adicionar nome)* | *(Adicionar RM)* |
+| *Gabriel Barbosa Furin* | *572941* |
+| *Lucas Kiodi Moraca* | *571004* |
+| *Renan Fracalossi Mano da Silva* | *569610* |
 
 ---
 
