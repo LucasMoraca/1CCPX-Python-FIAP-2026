@@ -3,7 +3,7 @@
 > **FIAP — Ciência da Computação · Global Solution 2026**  
 > Tema: Soluções em Energias Renováveis e Sustentáveis
 
-Sistema inteligente de monitoramento energético para uma missão espacial experimental. Desenvolvido em Python puro, exibe em tempo real os dados simulados dos módulos operacionais da missão, dispara alertas automáticos e executa tomadas de decisão autônomas diante de condições críticas.
+Sistema inteligente de monitoramento energético para uma missão espacial experimental. Desenvolvido em Python puro, abre automaticamente um **dashboard visual no navegador** com atualização em tempo real via Server-Sent Events (SSE). Dispara alertas automáticos e executa tomadas de decisão autônomas diante de condições críticas — zero dependências externas.
 
 ---
 
@@ -45,11 +45,11 @@ Os dados são atualizados a cada **1,5 segundos** via passeio aleatório suaviza
 ## Funcionalidades
 
 ### 📡 Monitoramento em tempo real
-- Dashboard interativo no terminal com atualização contínua
-- Gauge de barra para cada métrica com código de cores dinâmico
-- Mini-gráfico de tendência (*sparkline*) para temperatura, energia e potência
-- Resumo global: energia média, temperatura média, potência total e captação solar média
-- Contador de tempo de missão (MET) e ciclos de simulação
+- Dashboard visual no navegador, aberto automaticamente ao executar `python3 monitor.py`
+- Atualização contínua via **Server-Sent Events (SSE)** — sem refresh manual
+- Barras de progresso coloridas com sparklines SVG de tendência para temperatura, energia e potência
+- Banner de alerta global no topo quando qualquer módulo entra em estado crítico ou de alerta
+- Resumo global no cabeçalho: energia média, temperatura média, potência total e MET (Mission Elapsed Time)
 
 ### 🚨 Geração automática de alertas
 Três níveis de alerta, gerados automaticamente ao detectar **transição de status**:
@@ -74,11 +74,12 @@ Temp   ≥ 70°C  →  Ventilação aumentada para 80%.
 ```
 
 ### 🖥️ Controles interativos
-| Tecla | Ação |
+| Botão | Ação |
 |---|---|
-| `P` | Pausar / Retomar a simulação |
-| `L` | Limpar todos os alertas |
-| `Q` | Encerrar o programa |
+| `⏸ PAUSAR / ▶ RETOMAR` | Pausa ou retoma a simulação |
+| `✕ ALERTAS` | Limpa todos os alertas da central |
+
+Os botões disparam requisições `POST` ao servidor Python, que atualiza o estado e repropaga via SSE para todos os clientes conectados.
 
 ---
 
@@ -96,7 +97,8 @@ O projeto é **single-file** intencionalmente, para facilitar execução e corre
 
 ```
 monitor.py
-├── Constantes de limiar
+├── Constantes de limiar e configuração
+├── Estado global compartilhado (dict thread-safe)
 ├── Estruturas de dados (dataclasses)
 │   ├── DadosModulo
 │   └── Alerta
@@ -107,15 +109,14 @@ monitor.py
 ├── Tomada de decisão
 │   ├── decisao_autonoma() — regras if/elif em cascata
 │   └── gerar_alerta()     — detecta transição de status
-├── Helpers de desenho (curses)
-│   ├── barra()            — barra de progresso Unicode
-│   └── sparkline()        — gráfico de tendência Unicode
-├── Renderização
-│   ├── desenhar_cabecalho()
-│   ├── desenhar_modulo()
-│   ├── desenhar_alertas()
-│   └── desenhar_rodape()
-└── main() + curses.wrapper()
+├── HTML (string embutida)  — dashboard completo com CSS e JS
+├── Servidor HTTP (BaseHTTPRequestHandler)
+│   ├── GET  /         — serve o HTML
+│   ├── GET  /events   — stream SSE com os dados da simulação
+│   ├── POST /pause    — alterna pausado/rodando
+│   └── POST /clear    — limpa lista de alertas
+├── loop_simulacao()   — thread daemon com o ciclo de atualização
+└── __main__           — inicia threads + abre navegador
 ```
 
 ---
@@ -124,12 +125,8 @@ monitor.py
 
 ### Pré-requisitos
 - Python **3.10+**
-- Biblioteca `curses` — **já inclusa** na biblioteca padrão do Python (Linux e macOS)
-
-> ⚠️ **Windows:** o módulo `curses` não está disponível nativamente. Use o [Windows Terminal](https://aka.ms/terminal) com WSL2 (Ubuntu) ou instale `windows-curses`:
-> ```bash
-> pip install windows-curses
-> ```
+- Apenas bibliotecas da **stdlib** — `http.server`, `threading`, `webbrowser`, `json`, `dataclasses`
+- Nenhum `pip install` necessário, funciona em Windows, macOS e Linux
 
 ### Execução
 
@@ -138,11 +135,20 @@ monitor.py
 git clone https://github.com/<seu-usuario>/space-energy-monitor.git
 cd space-energy-monitor
 
-# Execute diretamente — sem dependências externas
+# Execute — o navegador abre automaticamente
 python3 monitor.py
 ```
 
-O terminal precisa ter pelo menos **100 × 35** caracteres para uma exibição ideal. Use `Ctrl+C` ou pressione `Q` para sair.
+O terminal exibirá:
+```
+  ⟁  SPACE ENERGY MONITOR — FIAP Global Solution 2026
+  ──────────────────────────────────────────────────
+  Iniciando servidor em http://localhost:8765
+  Abrindo dashboard no navegador...
+```
+
+Caso o navegador não abra sozinho, acesse manualmente **http://localhost:8765**.  
+Para encerrar, pressione `Ctrl+C` no terminal.
 
 ---
 
@@ -193,7 +199,7 @@ Essa lógica é chamada a cada ciclo para exibição no painel e também no mome
 | **Monitoramento de dados simulados** | 5 métricas por módulo, 4 módulos, atualização a cada 1,5 s com drift estocástico |
 | **Geração de alertas** | 3 níveis (CRITICO / ALERTA / INFO), disparados automaticamente na transição de status |
 | **Tomada de decisão básica** | Função `decisao_autonoma()` com 5 regras priorizadas, resposta exibida em tempo real |
-| **Visualização dos dados** | Dashboard curses com barras, sparklines, cores dinâmicas e resumo global |
+| **Visualização dos dados** | Dashboard HTML no navegador com barras animadas, sparklines SVG, cores dinâmicas e painel lateral de alertas |
 | **Organização do código** | Separação em camadas (dados → simulação → decisão → renderização), constantes configuráveis |
 | **Energias renováveis** | Métrica de captação solar monitorada; ações autônomas priorizam ativação de painéis solares |
 
