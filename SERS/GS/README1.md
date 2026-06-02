@@ -191,20 +191,6 @@ def decisao_autonoma(mod):
 Essa lógica é chamada a cada ciclo para exibição no painel e também no momento de geração de alertas críticos.
 
 ---
-
-## Critérios de avaliação atendidos
-
-| Critério | Implementação |
-|---|---|
-| **Monitoramento de dados simulados** | 5 métricas por módulo, 4 módulos, atualização a cada 1,5 s com drift estocástico |
-| **Geração de alertas** | 3 níveis (CRITICO / ALERTA / INFO), disparados automaticamente na transição de status |
-| **Tomada de decisão básica** | Função `decisao_autonoma()` com 5 regras priorizadas, resposta exibida em tempo real |
-| **Visualização dos dados** | Dashboard HTML no navegador com barras animadas, sparklines SVG, cores dinâmicas e painel lateral de alertas |
-| **Organização do código** | Separação em camadas (dados → simulação → decisão → renderização), constantes configuráveis |
-| **Energias renováveis** | Métrica de captação solar monitorada; ações autônomas priorizam ativação de painéis solares |
-
----
-
 ## Integrantes
 
 | Nome completo | RM |
