@@ -26,7 +26,7 @@ from typing import Optional
 # ─── Configurações ───────────────────────────────────────────────────────────
 PORT            = 8765
 INTERVALO_SEG   = 1.5
-MAX_HISTORICO   = 40
+MAX_HISTORICO   = 30
 MODULOS         = ["ALPHA", "BETA", "GAMMA", "DELTA"]
 
 TEMP_CRITICO    = 85.0

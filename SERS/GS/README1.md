@@ -131,12 +131,14 @@ monitor.py
 ### Execução
 
 ```bash
-# Clone o repositório
-git clone https://github.com/LucasMoraca/1CCPX-Python-FIAP-2026/blob/f5e75c649d2c9a3954668471c8fe5c6c5ef00661/SERS/GS/monitor2.py
-cd space-energy-monitor
+# Clone o repositório especificando a branch "Java"
+git clone -b Java https://github.com/LucasMoraca/1CCPX-Python-FIAP-2026.git
+
+# Navegue até a pasta exata onde o script está localizado
+cd 1CCPX-Python-FIAP-2026/SERS/GS
 
 # Execute — o navegador abre automaticamente
-python3 monitor.py
+python3 monitor2.py
 ```
 
 O terminal exibirá:
