@@ -40,23 +40,13 @@ Sistema de monitoramento de missão espacial desenvolvido em Python com IA gener
 
 ## 🖼️ Demonstração
 
-> **Atenção:** Substitua as imagens abaixo por prints reais da sua execução antes de entregar.
-
 ### Cenário Normal — missão operando dentro dos parâmetros
 
-![Dados normais da missão](assets/dados_normais.png)
+![Dados normais da missão](Captura%20de%20tela%202026-06-04%20134205.png)
 
 ### Cenário Crítico — alertas ativos e resposta da IA
 
-![Alerta crítico com análise da IA](assets/alerta_critico.png)
-
-### Monitoramento Contínuo
-
-![Ciclos de monitoramento](assets/monitoramento_continuo.png)
-
-### Análise completa da ARIA (IA)
-
-![Análise da IA](assets/analise_ia.png)
+![Alerta crítico com análise da IA](Captura%20de%20tela%202026-06-04%20134250.png)
 
 ---
 
