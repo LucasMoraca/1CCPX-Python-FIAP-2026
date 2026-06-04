@@ -73,7 +73,7 @@ Abra o notebook diretamente no Google Colab:
 
 ## 🎬 Vídeo de Demonstração
 
-[▶️ Assistir ao vídeo](https://link-do-video.com)
+[▶️ Assistir ao vídeo](https://youtu.be/4GFWJ7Yf5N4)
 
 > **Substitua** o link acima pelo link real do seu vídeo (YouTube, Drive, etc.)
 
