@@ -9,7 +9,7 @@ Sistema inteligente de monitoramento energético para uma missão espacial exper
 
 ## 🎬 Demonstração
 
-> 📺 **Vídeo no YouTube:** `https://youtu.be/TIr3p6f9udM`
+> 📺 **Vídeo no YouTube:** https://youtu.be/TIr3p6f9udM
 
 ---
 
