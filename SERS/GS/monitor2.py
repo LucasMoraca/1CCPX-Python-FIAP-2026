@@ -137,6 +137,28 @@ def gerar_alerta(ant: DadosModulo, nov: DadosModulo) -> Optional[Alerta]:
         return Alerta("INFO", nov.nome, "Módulo retornou ao estado NOMINAL.", hora)
     return None
 
+def _broadcast(payload: str):
+    """Envia payload para todos os clientes SSE conectados."""
+    with sse_lock:
+        mortos = []
+        for q in sse_clients:
+            try:
+                q.append(payload)
+            except Exception:
+                mortos.append(q)
+        for q in mortos:
+            sse_clients.remove(q)
+
+def _build_payload() -> str:
+    """Monta o JSON do estado atual (deve ser chamado com estado_lock adquirido)."""
+    return json.dumps({
+        "modulos":      estado["modulos"],
+        "alertas":      estado["alertas"],
+        "ciclo":        estado["ciclo"],
+        "tempo_missao": estado["tempo_missao"],
+        "pausado":      estado["pausado"],
+    })
+
 # ─── Thread de simulação ──────────────────────────────────────────────────────
 def loop_simulacao():
     import copy
@@ -148,39 +170,26 @@ def loop_simulacao():
     while True:
         time.sleep(INTERVALO_SEG)
         with estado_lock:
-            if estado["pausado"]:
-                continue
-            estado["ciclo"] += 1
-            estado["tempo_missao"] += int(INTERVALO_SEG)
-            novos = []
-            for mod in modulos:
-                ant = copy.copy(mod)
-                mod = atualizar_modulo(mod)
-                al  = gerar_alerta(ant, mod)
-                if al:
-                    estado["alertas"].insert(0, al.to_dict())
-                    estado["alertas"] = estado["alertas"][:20]
-                novos.append(mod)
-            modulos = novos
-            estado["modulos"] = [m.to_dict() for m in modulos]
+            if not estado["pausado"]:
+                # Só avança a simulação se não estiver pausado
+                estado["ciclo"] += 1
+                estado["tempo_missao"] += int(INTERVALO_SEG)
+                novos = []
+                for mod in modulos:
+                    ant = copy.copy(mod)
+                    mod = atualizar_modulo(mod)
+                    al  = gerar_alerta(ant, mod)
+                    if al:
+                        estado["alertas"].insert(0, al.to_dict())
+                        estado["alertas"] = estado["alertas"][:20]
+                    novos.append(mod)
+                modulos = novos
+                estado["modulos"] = [m.to_dict() for m in modulos]
 
-        # Notifica todos os clientes SSE
-        payload = json.dumps({
-            "modulos":      estado["modulos"],
-            "alertas":      estado["alertas"],
-            "ciclo":        estado["ciclo"],
-            "tempo_missao": estado["tempo_missao"],
-            "pausado":      estado["pausado"],
-        })
-        with sse_lock:
-            mortos = []
-            for q in sse_clients:
-                try:
-                    q.append(payload)
-                except Exception:
-                    mortos.append(q)
-            for q in mortos:
-                sse_clients.remove(q)
+            # Sempre monta e transmite o payload (pausado ou não)
+            payload = _build_payload()
+
+        _broadcast(payload)
 
 # ─── HTML do dashboard ────────────────────────────────────────────────────────
 HTML = r"""<!DOCTYPE html>
@@ -251,6 +260,16 @@ HTML = r"""<!DOCTYPE html>
   .btn-pause.paused{background:#2b0a0a;border-color:#dc2626;color:#f87171}
   .btn-clear{background:#0d1f35;border-color:var(--border);color:var(--muted)}
   .btn-clear:hover{border-color:var(--cyan);color:var(--cyan)}
+
+  /* PAUSED OVERLAY BANNER */
+  #pause-overlay{
+    display:none;position:fixed;top:65px;left:0;right:0;
+    padding:8px 28px;background:#1a0a00;
+    border-bottom:1px solid var(--yellow);
+    color:var(--yellow);font-size:12px;font-weight:700;
+    letter-spacing:.15em;text-align:center;z-index:200;
+  }
+  #pause-overlay.visible{display:block}
 
   /* CRITICAL BANNER */
   #banner{
@@ -388,6 +407,9 @@ HTML = r"""<!DOCTYPE html>
   </div>
 </header>
 
+<!-- Banner de pausa (aparece imediatamente ao clicar) -->
+<div id="pause-overlay">⏸ SIMULAÇÃO PAUSADA — clique em RETOMAR para continuar</div>
+
 <div id="banner"></div>
 
 <div class="main">
@@ -418,10 +440,6 @@ HTML = r"""<!DOCTYPE html>
 </div>
 
 <script>
-const DECISIONS = {
-  NOMINAL: null,
-};
-
 function fmtTime(s){
   const h=String(Math.floor(s/3600)).padStart(2,'0');
   const m=String(Math.floor((s%3600)/60)).padStart(2,'0');
@@ -469,11 +487,10 @@ function renderModules(modulos){
     const metricsHtml = metrics.map(m=>{
       const pct = Math.min(100,(m.value/m.max)*100);
       const col = barColor(m.label, m.value);
-      const valColor = col;
       const spark = m.hist.length>1 ? makeSpark(m.hist, col) : '<span style="width:50px;display:inline-block"></span>';
       return `<div class="metric">
         <span class="metric-label">${m.label}</span>
-        <span class="metric-value" style="color:${valColor}">${m.value.toFixed(1)}${m.unit}</span>
+        <span class="metric-value" style="color:${col}">${m.value.toFixed(1)}${m.unit}</span>
         <div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${col}"></div></div>
         <div class="spark-wrap">${spark}</div>
       </div>`;
@@ -566,16 +583,25 @@ function updateHeader(data){
   document.getElementById('h-temp').style.color    = avgT>=85?'#ff3c3c':avgT>=70?'#ffcc00':'#fbbf24';
 }
 
-// SSE
+function applyPauseState(pausado){
+  const btn = document.getElementById('btn-pause');
+  const overlay = document.getElementById('pause-overlay');
+  if(pausado){
+    btn.textContent='▶ RETOMAR';
+    btn.className='btn btn-pause paused';
+    overlay.classList.add('visible');
+  } else {
+    btn.textContent='⏸ PAUSAR';
+    btn.className='btn btn-pause';
+    overlay.classList.remove('visible');
+  }
+}
+
+// SSE — recebe atualizações do servidor
 const evtSource = new EventSource('/events');
 evtSource.onmessage = function(e){
   const data = JSON.parse(e.data);
-  const btn = document.getElementById('btn-pause');
-  if(data.pausado){
-    btn.textContent='▶ RETOMAR'; btn.className='btn btn-pause paused';
-  } else {
-    btn.textContent='⏸ PAUSAR'; btn.className='btn btn-pause';
-  }
+  applyPauseState(data.pausado);
   updateHeader(data);
   updateBanner(data.modulos);
   renderModules(data.modulos);
@@ -583,11 +609,24 @@ evtSource.onmessage = function(e){
   renderAutonomous(data.modulos);
 };
 
+// Captura teclas do teclado
+document.addEventListener('keydown', function(event) {
+  const tecla = event.key.toLowerCase();
+  if(tecla === 'p') togglePause();
+  else if(tecla === 'l') clearAlerts();
+});
+
 function togglePause(){
-  fetch('/pause',{method:'POST'});
+  // Atualiza a UI imediatamente para feedback instantâneo
+  const btn = document.getElementById('btn-pause');
+  const pausando = btn.textContent.includes('PAUSAR');
+  applyPauseState(pausando);
+  // Notifica o servidor
+  fetch('/pause', {method:'POST'});
 }
+
 function clearAlerts(){
-  fetch('/clear',{method:'POST'});
+  fetch('/clear', {method:'POST'});
 }
 </script>
 </body>
@@ -638,13 +677,20 @@ class Handler(BaseHTTPRequestHandler):
         if self.path == "/pause":
             with estado_lock:
                 estado["pausado"] = not estado["pausado"]
+                payload = _build_payload()
+            # Transmite imediatamente para todos os clientes
+            _broadcast(payload)
             self.send_response(200)
             self.end_headers()
+
         elif self.path == "/clear":
             with estado_lock:
                 estado["alertas"] = []
+                payload = _build_payload()
+            _broadcast(payload)
             self.send_response(200)
             self.end_headers()
+
         else:
             self.send_response(404)
             self.end_headers()
