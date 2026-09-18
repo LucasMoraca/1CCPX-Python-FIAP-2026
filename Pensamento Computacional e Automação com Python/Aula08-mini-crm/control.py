@@ -15,3 +15,8 @@ def read_leads():
         return []
 
 print(read_leads())
+
+def create_lead(lead_dict):
+    leads = read_leads()
+    leads.append(lead_dict)
+    DB_PATH.write_text(json.dumps(leads, ensure_ascii=False, indent=2), encoding="utf-8")
